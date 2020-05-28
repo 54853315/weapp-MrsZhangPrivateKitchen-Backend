@@ -1,0 +1,53 @@
+settings:
+  files:
+    outputs:
+      status: true
+      path: ""
+      name: .r.outputs.log
+    logs:
+      status: true
+      path: ""
+      name: .r.logs.log
+    errors:
+      status: true
+      path: ""
+      name: .r.errors.log
+  flimit: 100
+  legacy:
+    force: false
+    interval: 0s
+server:
+  status: true
+  open: false
+  port: 8080
+  host: localhost
+schema:
+  - name: FoodBackend
+    path: /Users/mac/Documents/GoLearning/FoodBackend/
+    commands:
+#      clean:
+#        status: true
+#      vet:
+#        status: true
+#      fmt:
+#        status: true
+#      test:
+#        status: true
+#      generate:
+#        status: true
+      install:
+        status: true
+#      build:
+#        status: true
+      run:
+        status: true
+    watcher:
+      extensions:
+        - go
+      paths:
+        - /
+      ignore:
+        paths:
+          - .git
+          - .realize
+          - vendor
