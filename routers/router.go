@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
+	"net/http"
 )
 
 func InitRouter() *gin.Engine {
@@ -16,7 +17,7 @@ func InitRouter() *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
-	//r.Use(middleware.Cors())
+	r.Use(middleware.Cors())
 	//r.Use(middleware.Secure)
 	gin.SetMode(setting.RunMode)
 
@@ -26,7 +27,13 @@ func InitRouter() *gin.Engine {
 	// auth login
 	r.POST("/api/auth", mini_app.GetAuth)
 
-	apiv1 := r.Group("/api", middleware.JWT())
+	r.GET("/api/info", func(context *gin.Context) {
+		context.JSON(http.StatusOK, gin.H{
+			"code": 200,
+		})
+	})
+
+	apiv1 := r.Group("/api")
 	{
 		bookController := &api.BookController{}
 		apiv1.GET("/books", bookController.List)
