@@ -4,6 +4,7 @@ import (
 	"FoodBackend/pkg/api/dto"
 	"FoodBackend/pkg/e"
 	"FoodBackend/pkg/util"
+	"fmt"
 	"github.com/jinzhu/gorm"
 	"time"
 )
@@ -11,15 +12,15 @@ import (
 type Book struct {
 	Model
 	//TypeId     int    `json:"type_id" gorm:"index"` //声明索引，如果你使用了自动迁移功能则会有所影响，在不使用则无影响
-	Name                    string       `gorm:"type:varchar(50);unique_index";json:"name"`
+	Name                    string       `json:"name" gorm:"type:varchar(50);unique_index"`
 	Content                 string       `json:"content"`
 	AllowComments           int          `json:"allow_comments"`
 	CreateUserId            int          `json:"create_user_id"`
 	IsShareWeChatFriendZone int          `json:"is_share_wechat_friend_zone" gorm:"column:is_share_wechat_friend_zone"`
 	MoreJson                BookMoreJson `json:"more_json";gorm:"type:json"`
 	Status                  string       `json:"status"`
-	Tag                     []Tag        `gorm:"many2many:book_tags" json:"tag"`
-	//多对多关系
+	Tag                     []Tag        `gorm:"many2many:book_tags";json:"tags"`
+	User                    User         `gorm:"foreignkey=CreateUserId;association_foreignkey=CreateUserId";json:"user"`
 }
 
 type BookMoreJson struct {
@@ -50,26 +51,51 @@ func (Book) GetByCon(maps interface{}) Book {
 	return book
 }
 
-func (Book) List(pageNum int, pageSize int, maps interface{}) (books []Book) {
-	db.Preload("Tag").Where(maps).Offset(pageNum).Limit(pageSize).Find(&books) //预加载器，分别执行了2条SQL
-	//db.Debug().Preload("Tag").Where(maps).Offset(pageNum).Limit(pageSize).Find(&books) //预加载器，分别执行了2条SQL
-	return
+func (model *Book) List(listDto dto.GeneralListDto) (books []Book, total int64) {
+
+	var tag Tag
+	allRelationTags := tag.GetAllRelatedTags()
+
+	for sk, sv := range dto.TransformSearch(listDto.Q, dto.BookListSearchMapping) {
+		if sk == "name" {
+			db = db.Where(fmt.Sprintf("%s LIKE ?", sk), "%"+sv+"%")
+		} else {
+			db = db.Where(fmt.Sprintf("%s = ?", sk), sv)
+		}
+	}
+	//db.Model(model).Related(&model.User,"CreateUserId").Offset(listDto.Skip).Limit(listDto.Limit).Find(&books)	//NOTE not working
+	db.Model(model).Offset(listDto.Skip).Limit(listDto.Limit).Find(&books)
+
+	for bookIndex, book := range books {
+		if book.CreateUserId > 0 {
+			db.Model(&books[bookIndex]).Related(&books[bookIndex].User, "CreateUserId")
+		}
+		for _, tag := range allRelationTags {
+			if tag.BookId == book.Id {
+				books[bookIndex].Tag = append(books[bookIndex].Tag, tag)
+			}
+		}
+	}
+	db.Model(&books).Count(&total)
+	return books, total
 }
 
-func (Book) Get(dto dto.GeneralGetDto) Book {
-	var book Book
+func (Book) Get(dto dto.GeneralGetDto) (book Book) {
 	//if me > 0 {
 	//	db.Where("create_user_id=?", me)
 	//}
-	db.Where("id=?", dto.Id).First(&book)
-	db.Model(&book).Related(&book.Tag)
-	return book
+	//db.Preload("Tag").Where("id=?", dto.Id).Find(&book)	//NOTE 因官方这个many2many + preload有返回行数的Bug，所以不用
+	db.Where("id=?", dto.Id).Find(&book)
+	db.Model(&book).Related(&book.User, "CreateUserId")
+	var tags Tag
+	tags.GetTagsByBookId(dto.Id)
+	book.Tag = []Tag{tags}
+	return
 }
 
-func (Book) GetBooksByTagId(id int) []Book {
-	var books []Book
+func (Book) GetBooksByTagId(id int) (books []Book) {
 	db.Where("tag_id", id).Find(&books)
-	return books
+	return
 }
 
 func (Book) ChangeStatus(dto dto.BookChangeDto) int64 {
@@ -87,7 +113,18 @@ func (Book) Update(dto dto.BookEditDto) int64 {
 		Status: dto.Status,
 	}
 	util.Log.Notice("bookModel:", ups)
-	return db.Model(&Book{Model: Model{Id: dto.Id}}).Update(&ups).RowsAffected
+	affected := db.Model(&Book{Model: Model{Id: dto.Id}}).Update(&ups).RowsAffected
+
+	if affected > 0 {
+		//@TODO 创建Tag关联，还要去除多余的关联
+		tag := Tag{
+			BookId: ups.Id,
+			Name:   dto.Name,
+		}
+		util.Log.Notice("tagModel:", tag)
+		//db.Create(&tag)
+	}
+	return 0
 }
 
 func (Book) Create(dto dto.BookCreateDto) (Book, int) {
@@ -106,6 +143,13 @@ func (Book) Create(dto dto.BookCreateDto) (Book, int) {
 		util.Log.Notice("bookModel:", book)
 		result := db.Create(&book)
 		if result.Error == nil {
+			//@TODO 创建Tag关联
+			tag := Tag{
+				BookId: book.Id,
+				Name:   dto.Name,
+			}
+			util.Log.Notice("tagModel:", tag)
+			db.Create(&tag)
 			return book, 0
 		} else {
 			util.Log.Error(result.Error.Error())

@@ -27,12 +27,15 @@ func InitRouter() *gin.Engine {
 	// auth login
 	r.POST("/api/auth", mini_app.GetAuth)
 
+	// basic web info
 	r.GET("/api/info", func(context *gin.Context) {
 		context.JSON(http.StatusOK, gin.H{
 			"code": 200,
+			"data": map[string]interface{}{"name": "嘻嘻嘻，小张私厨房app"},
 		})
 	})
 
+	//apiv1 := r.Group("/api",middleware.JWT())
 	apiv1 := r.Group("/api")
 	{
 		bookController := &api.BookController{}

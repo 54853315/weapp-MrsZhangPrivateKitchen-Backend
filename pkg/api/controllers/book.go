@@ -5,7 +5,6 @@ import (
 	"FoodBackend/models"
 	"FoodBackend/pkg/api/dto"
 	"FoodBackend/pkg/e"
-	"fmt"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,18 +18,17 @@ func (self *BookController) List(c *gin.Context) {
 	var listDto dto.GeneralListDto
 	if self.BindAndValidate(c, &listDto) {
 
-		var books []models.Book
-		var total int64
-		db := models.GetDB()
-		for sk, sv := range dto.TransformSearch(listDto.Q, dto.BookListSearchMapping) {
-			if sk == "name" {
-				db = db.Where(fmt.Sprintf("%s LIKE ?", sk), "%"+sv+"%")
-			} else {
-				db = db.Where(fmt.Sprintf("%s = ?", sk), sv)
-			}
-		}
-		db.Offset(listDto.Skip).Limit(listDto.Limit).Find(&books)
-		db.Model(&models.Book{}).Count(&total)
+		//var b models.Book
+		//var u models.User
+		//models.GetDB().Model(&b).Related(&u,"CreateUserId")
+		//
+		//resp(c, map[string]interface{}{
+		//	"b": b,
+		//	"u":  u,
+		//})
+		//return
+
+		books, total := bookModel.List(listDto)
 		resp(c, map[string]interface{}{
 			"result": books,
 			"total":  total,
