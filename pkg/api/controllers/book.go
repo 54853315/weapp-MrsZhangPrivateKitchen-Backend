@@ -5,6 +5,7 @@ import (
 	"FoodBackend/models"
 	"FoodBackend/pkg/api/dto"
 	"FoodBackend/pkg/e"
+	"fmt"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,21 +15,23 @@ type BookController struct {
 
 var bookModel = models.Book{}
 
+func (self *BookController) timeLine(books []models.Book) map[string][]models.Book {
+	arr := map[string][]models.Book{}
+	for _, book := range books {
+		day := book.CreatedAt.Day()
+		month := int(book.CreatedAt.Month())
+		dateKey := fmt.Sprintf("%d-%d", month, day)
+
+		arr[dateKey] = append(arr[dateKey], book)
+	}
+	return arr
+}
+
 func (self *BookController) List(c *gin.Context) {
 	var listDto dto.GeneralListDto
 	if self.BindAndValidate(c, &listDto) {
-
-		//var b models.Book
-		//var u models.User
-		//models.GetDB().Model(&b).Related(&u,"CreateUserId")
-		//
-		//resp(c, map[string]interface{}{
-		//	"b": b,
-		//	"u":  u,
-		//})
-		//return
-
-		books, total := bookModel.List(listDto)
+		result, total := bookModel.List(listDto)
+		books := self.timeLine(result)
 		resp(c, map[string]interface{}{
 			"result": books,
 			"total":  total,
@@ -40,8 +43,7 @@ func (self *BookController) Get(c *gin.Context) {
 	var gDto dto.GeneralGetDto
 	if self.BindAndValidate(c, &gDto) {
 		data := bookModel.Get(gDto)
-		//role not found
-
+		//book not found
 		if gDto.Id < 1 {
 			fail(c, e.ERROR_NOT_EXIST)
 			return

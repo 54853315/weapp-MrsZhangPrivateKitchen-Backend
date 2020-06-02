@@ -19,8 +19,9 @@ type Book struct {
 	IsShareWeChatFriendZone int          `json:"is_share_wechat_friend_zone" gorm:"column:is_share_wechat_friend_zone"`
 	MoreJson                BookMoreJson `json:"more_json";gorm:"type:json"`
 	Status                  string       `json:"status"`
-	Tag                     []Tag        `gorm:"many2many:book_tags";json:"tags"`
-	User                    User         `gorm:"foreignkey=CreateUserId;association_foreignkey=CreateUserId";json:"user"`
+	Tag                     []Tag        `json:"tags";gorm:"many2many:book_tags"`
+	User                    User         `json:"user";gorm:"foreignkey=CreateUserId;association_foreignkey=CreateUserId"`
+	FileUrlJson             string       `json:"file_url_json";gorm:"type:json"`
 }
 
 type BookMoreJson struct {
@@ -64,7 +65,8 @@ func (model *Book) List(listDto dto.GeneralListDto) (books []Book, total int64) 
 		}
 	}
 	//db.Model(model).Related(&model.User,"CreateUserId").Offset(listDto.Skip).Limit(listDto.Limit).Find(&books)	//NOTE not working
-	db.Model(model).Offset(listDto.Skip).Limit(listDto.Limit).Find(&books)
+	//@TODO 如果未登录，则强制只能看发布的books
+	db.Model(model).Where("status = ?", "publish").Offset(listDto.Skip).Limit(listDto.Limit).Order("created_at DESC", true).Find(&books)
 
 	for bookIndex, book := range books {
 		if book.CreateUserId > 0 {
@@ -104,7 +106,7 @@ func (Book) ChangeStatus(dto dto.BookChangeDto) int64 {
 
 func (Book) Update(dto dto.BookEditDto) int64 {
 	ups := Book{
-		Name:                    dto.Name,
+		//Name:                    dto.Name,
 		Content:                 dto.Content,
 		AllowComments:           dto.AllowComments,
 		IsShareWeChatFriendZone: dto.IsShareWeChatFriendZone,
@@ -119,7 +121,7 @@ func (Book) Update(dto dto.BookEditDto) int64 {
 		//@TODO 创建Tag关联，还要去除多余的关联
 		tag := Tag{
 			BookId: ups.Id,
-			Name:   dto.Name,
+			//Name:   dto.Name,
 		}
 		util.Log.Notice("tagModel:", tag)
 		//db.Create(&tag)
@@ -129,10 +131,10 @@ func (Book) Update(dto dto.BookEditDto) int64 {
 
 func (Book) Create(dto dto.BookCreateDto) (Book, int) {
 	var existOne Book
-	db.Where("name = ? ", dto.Name).First(&existOne)
+	//db.Where("name = ? ", dto.Name).First(&existOne)
 	if existOne.Id == 0 {
 		book := Book{
-			Name:                    dto.Name,
+			//Name:                    dto.Name,
 			Content:                 dto.Content,
 			AllowComments:           dto.AllowComments,
 			IsShareWeChatFriendZone: dto.IsShareWeChatFriendZone,
@@ -146,7 +148,7 @@ func (Book) Create(dto dto.BookCreateDto) (Book, int) {
 			//@TODO 创建Tag关联
 			tag := Tag{
 				BookId: book.Id,
-				Name:   dto.Name,
+				//Name:   dto.Name,
 			}
 			util.Log.Notice("tagModel:", tag)
 			db.Create(&tag)
