@@ -15,16 +15,38 @@ type BookController struct {
 
 var bookModel = models.Book{}
 
-func (self *BookController) timeLine(books []models.Book) map[string][]models.Book {
-	arr := map[string][]models.Book{}
-	for _, book := range books {
-		day := book.CreatedAt.Day()
-		month := int(book.CreatedAt.Month())
-		dateKey := fmt.Sprintf("%d-%d", month, day)
+type timeLine struct {
+	Date  string        `json:"date"`
+	Books []models.Book `json:"books"`
+}
 
-		arr[dateKey] = append(arr[dateKey], book)
+func (self *BookController) timeLine(books []models.Book) []timeLine { //NOTE 切片的timeline结构体来模拟map，避免GO1.12后输出时会自动排序的问题
+
+	var timelines []timeLine
+
+	for i := 0; i < len(books); i++ {
+		day := books[i].CreatedAt.Day()
+		month := int(books[i].CreatedAt.Month())
+		dateString := fmt.Sprintf("%0d-%d", month, day)
+		existsDateInStrut := false
+
+		for timelineKey, timelineItem := range timelines {
+			if timelineItem.Date == dateString {
+				timelines[timelineKey].Books = append(timelines[timelineKey].Books, books[i])
+				existsDateInStrut = true
+			}
+		}
+
+		if !existsDateInStrut {
+			timelines = append(timelines, timeLine{
+				Date: dateString,
+				Books: []models.Book{
+					books[i],
+				},
+			})
+		}
 	}
-	return arr
+	return timelines
 }
 
 func (self *BookController) List(c *gin.Context) {
