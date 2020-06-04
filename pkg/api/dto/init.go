@@ -1,12 +1,15 @@
 package dto
 
 import (
+	"FoodBackend/pkg/util"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator"
+	"github.com/go-playground/validator/v10"
 	"strings"
 )
+
+//NOTE 记得一定要用"github.com/go-playground/validator/v10"
 
 func init() {
 	// Register custom validate methods
@@ -23,7 +26,10 @@ func init() {
 // Bind : bind request dto and auto verify parameters
 func Bind(c *gin.Context, obj interface{}) error {
 	_ = c.ShouldBindUri(obj)
+	//if err := c.ShouldBindBodyWith(obj,binding.JSON); err != nil {
 	if err := c.ShouldBind(obj); err != nil {
+		util.Log.Debug("err", err)
+		//util.Log.Debug("validator",err.(validator.ValidationErrors))
 		if fieldErr, ok := err.(validator.ValidationErrors); ok {
 			var tagErrorMsg []string
 			//util.Log.Debug("fieldErr:", fieldErr)

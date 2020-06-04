@@ -4,6 +4,15 @@ import (
 	"reflect"
 )
 
+func IsContain(items []string, item string) bool {
+	for _, eachItem := range items {
+		if eachItem == item {
+			return true
+		}
+	}
+	return false
+}
+
 func StructToMapViaReflect(obj interface{}) map[string]interface{} {
 	t := reflect.TypeOf(obj)
 	v := reflect.ValueOf(obj)

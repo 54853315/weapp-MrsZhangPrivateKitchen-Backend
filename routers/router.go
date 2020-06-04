@@ -35,12 +35,19 @@ func InitRouter() *gin.Engine {
 		})
 	})
 
-	//apiv1 := r.Group("/api",middleware.JWT())
-	apiv1 := r.Group("/api")
+	bookController := &api.BookController{}
+	CommentController := &api.CommentController{}
+	apiv1Guest := r.Group("/api")
 	{
-		bookController := &api.BookController{}
-		apiv1.GET("/books", bookController.List)
-		apiv1.GET("/books/:id", bookController.Get)
+		apiv1Guest.GET("/books", bookController.List)
+		apiv1Guest.GET("/books/:id", bookController.Get)
+
+		apiv1Guest.GET("/comments", CommentController.List)
+	}
+
+	apiv1 := r.Group("/api", middleware.JWT())
+	//apiv1 := r.Group("/api")
+	{
 		apiv1.POST("/books", bookController.Create)
 		apiv1.PATCH("/books/status/:id", bookController.ChangeStatus)
 		apiv1.PUT("/books/:id", bookController.Update)
@@ -49,10 +56,11 @@ func InitRouter() *gin.Engine {
 		TagController := &api.TagController{}
 		apiv1.GET("/tags", TagController.List)
 
-		CommentController := &api.CommentController{}
-		apiv1.GET("/comments", CommentController.List)
 		apiv1.POST("/comments", CommentController.Create)
 		apiv1.DELETE("/comments/:id", CommentController.Delete)
+
+		UserController := &api.UserController{}
+		apiv1.GET("/user/info", UserController.Get)
 	}
 
 	return r

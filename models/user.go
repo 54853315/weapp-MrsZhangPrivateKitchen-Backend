@@ -55,9 +55,8 @@ func (User) GetUserByCondition(maps interface{}) User {
 	return user
 }
 
-func (User) GetUserById(id int) (user User) {
-	//db.Where("id=?", id).First(&user)
-	db.First(&user, id)
+func (User) Get(id int) (user User) {
+	db.Where("id=?", id).First(&user)
 	return
 }
 
@@ -68,9 +67,10 @@ func (User) UpdateUser(id int, data interface{}) bool {
 
 func (User) CreateUser(data map[string]interface{}) bool {
 	db.Create(&User{
-		Name:     data["name"].(string),
+		//Name:     data["name"].(string),
 		WxOpenId: data["open_id"].(string),
-		Thumb:    data["thumb"].(string),
+		ApiToken: data["api_token"].(string),
+		//Thumb:    data["thumb"].(string),
 		IsAdmin:  false,
 		MoreJson: data["more_json"],
 		//CreatedAt: data["created_at"].(string),
