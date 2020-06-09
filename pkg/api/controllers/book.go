@@ -5,8 +5,12 @@ import (
 	"FoodBackend/models"
 	"FoodBackend/pkg/api/dto"
 	"FoodBackend/pkg/e"
+	"FoodBackend/pkg/util"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"os"
+	"strings"
+	"time"
 )
 
 type BookController struct {
@@ -141,4 +145,28 @@ func (self *BookController) Delete(c *gin.Context) {
 		}
 		ok(c, e.SUCCESS)
 	}
+}
+
+func (self BookController) Upload(c *gin.Context) {
+	var uploadDto dto.UploadDto
+	uploadDto.CreateUserId = jwt.UserId
+
+	if self.BindAndValidate(c, &uploadDto) {
+		fileExt := uploadDto.File.Filename[strings.LastIndex(uploadDto.File.Filename, "."):]
+		FileName := util.GetUniqueId() + fileExt
+		pathName := time.Now().Format("2006/01/02")
+		savePath := getUploadPath() + pathName
+
+		if err := os.MkdirAll(savePath, os.ModePerm); err != nil {
+			util.Log.Error(err)
+		}
+		fullPath := savePath + "/" + FileName
+
+		_ = c.SaveUploadedFile(uploadDto.File, fullPath)
+		resp(c, map[string]interface{}{
+			"savePath":  fullPath,
+			"imageName": FileName,
+		})
+	}
+
 }
