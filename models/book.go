@@ -4,6 +4,7 @@ import (
 	"FoodBackend/pkg/api/dto"
 	"FoodBackend/pkg/e"
 	"FoodBackend/pkg/util"
+	"encoding/json"
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"time"
@@ -20,8 +21,8 @@ type Book struct {
 	MoreJson                BookMoreJson `json:"more_json";gorm:"type:json"`
 	Status                  string       `json:"status"`
 	Tag                     []Tag        `json:"tags";gorm:"many2many:book_tags"`
-	User                    User         `json:"user";gorm:"foreignkey=CreateUserId;association_foreignkey=CreateUserId"`
-	FileUrlJson             string       `json:"file_url_json";gorm:"type:json"`
+	User                    User         `gorm:"-";json:"user";gorm:"foreignkey=CreateUserId;association_foreignkey=CreateUserId"`
+	FileUrlJson             interface{}  `json:"file_url_json";gorm:"type:json"`
 }
 
 type BookMoreJson struct {
@@ -105,12 +106,14 @@ func (Book) ChangeStatus(dto dto.BookChangeDto) int64 {
 }
 
 func (Book) Update(dto dto.BookEditDto) int64 {
+	fileJson, _ := json.Marshal(dto.Files)
 	ups := Book{
 		//Name:                    dto.Name,
 		Content:                 dto.Content,
 		AllowComments:           dto.AllowComments,
 		IsShareWeChatFriendZone: dto.IsShareWeChatFriendZone,
 		CreateUserId:            dto.CreateUserId,
+		FileUrlJson:             fileJson,
 		//MoreJson:                data["more_json"].(BookMoreJson),
 		Status: dto.Status,
 	}
@@ -132,6 +135,7 @@ func (Book) Update(dto dto.BookEditDto) int64 {
 func (Book) Create(dto dto.BookCreateDto) (Book, int) {
 	var existOne Book
 	//db.Where("name = ? ", dto.Name).First(&existOne)
+	fileJson, _ := json.Marshal(dto.Files)
 	if existOne.Id == 0 {
 		book := Book{
 			//Name:                    dto.Name,
@@ -139,8 +143,8 @@ func (Book) Create(dto dto.BookCreateDto) (Book, int) {
 			AllowComments:           dto.AllowComments,
 			IsShareWeChatFriendZone: dto.IsShareWeChatFriendZone,
 			CreateUserId:            dto.CreateUserId,
-			//MoreJson:                data["more_json"].(BookMoreJson),
-			Status: dto.Status,
+			FileUrlJson:             fileJson,
+			Status:                  dto.Status,
 		}
 		util.Log.Notice("bookModel:", book)
 		result := db.Create(&book)

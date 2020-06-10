@@ -16,6 +16,8 @@ var userModel = models.User{}
 
 type auth struct {
 	JsCode string `json:"js_code" binding:"required"`
+	Thumb  string `json:"thumb" binding:"required"`
+	Name   string `json:"name" binding:"required"`
 }
 
 func GetAuth(c *gin.Context) {
@@ -58,16 +60,22 @@ func GetAuth(c *gin.Context) {
 		if user.Id == 0 {
 			insert := make(map[string]interface{})
 			insert["open_id"] = openId
+			insert["name"] = request.Name
+			insert["thumb"] = request.Thumb
 			insert["api_token"] = token
 			insert["more_json"] = moreJson
-			userModel.CreateUser(insert)
+			user = userModel.Create(insert)
 		} else {
 			// 更新用户信息
 			update := make(map[string]interface{})
+			update["name"] = request.Name
+			update["thumb"] = request.Thumb
 			update["more_json"] = moreJson
 			update["api_token"] = token
-			userModel.UpdateUser(user.Id, update)
+			userModel.Update(user.Id, update)
 		}
+
+		data["uid"] = user.Id
 
 	} else {
 		util.Log.Debug("Jwt auth fail : ", err.Error())

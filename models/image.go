@@ -14,7 +14,7 @@ type Image struct {
 
 func (Image) Create(dto dto.UploadDto) (Image, int) {
 	image := Image{
-		Url:          dto.File,
+		Url:          dto.File.Filename,
 		CreateUserId: dto.CreateUserId,
 	}
 	util.Log.Notice("ImageModel:", image)

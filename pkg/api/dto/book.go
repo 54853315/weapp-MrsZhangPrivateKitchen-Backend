@@ -14,7 +14,8 @@ type BookCreateDto struct {
 	AllowComments           int    `form:"allow_comments" json:"allow_comments"`
 	IsShareWeChatFriendZone int    `form:"share_wx" json:"share_wx"`
 	CreateUserId            int
-	Status                  string `form:"status" json:"status" binding:"required,oneof=private publish"`
+	Status                  string   `form:"status" json:"status" binding:"required,oneof=private publish"`
+	Files                   []string `form:"files" json:"files" binding:"required"`
 }
 
 // BookEditDto - dto for role's modification
@@ -26,7 +27,8 @@ type BookEditDto struct {
 	AllowComments           int    `form:"allow_comments" json:"allow_comments"`
 	IsShareWeChatFriendZone int    `form:"share_wx" json:"share_wx"`
 	CreateUserId            int
-	Status                  string `form:"status" json:"status" binding:"required,oneof=private publish"`
+	Status                  string   `form:"status" json:"status" binding:"required,oneof=private publish"`
+	Files                   []string `form:"files" json:"files" binding:"required"`
 }
 
 type BookChangeDto struct {

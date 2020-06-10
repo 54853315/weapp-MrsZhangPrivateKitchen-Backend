@@ -16,6 +16,8 @@ var (
 	ReadTimeout  time.Duration
 	WriteTimeout time.Duration
 
+	AppUrl string
+
 	PageSize  int
 	JwtSecret string
 )
@@ -57,6 +59,7 @@ func LoadApp() {
 
 	JwtSecret = sec.Key("JWT_SECRET").MustString("!@)*#)!@U#@*!@!)")
 	PageSize = sec.Key("PAGE_SIZE").MustInt(10)
+	AppUrl = sec.Key("URL").MustString("http://localhost")
 }
 
 func LoadWeChat() {

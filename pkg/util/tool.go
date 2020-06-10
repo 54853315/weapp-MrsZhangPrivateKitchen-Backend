@@ -1,6 +1,8 @@
 package util
 
 import (
+	"github.com/satori/go.uuid"
+	"os"
 	"reflect"
 )
 
@@ -61,4 +63,21 @@ func Empty(value reflect.Value) bool {
 		return value.IsNil()
 	}
 	return reflect.DeepEqual(value.Interface(), reflect.Zero(value.Type()).Interface())
+}
+
+func GetUniqueId() string {
+	u4 := uuid.NewV4()
+	return u4.String()
+}
+
+func GetFileBuff(filepath string) []byte {
+	file, err := os.Open(filepath)
+	if err != nil {
+		Log.Fatal(err)
+	}
+	buff := make([]byte, 512)
+	if _, err := file.Read(buff); err != nil {
+		Log.Fatal(err)
+	}
+	return buff
 }

@@ -60,23 +60,25 @@ func (User) Get(id int) (user User) {
 	return
 }
 
-func (User) UpdateUser(id int, data interface{}) bool {
+func (User) Update(id int, data interface{}) bool {
 	db.Model(&User{}).Where("id = ?", id).Updates(data)
 	return true
 }
 
-func (User) CreateUser(data map[string]interface{}) bool {
-	db.Create(&User{
-		//Name:     data["name"].(string),
+func (User) Create(data map[string]interface{}) (user User) {
+
+	user = User{
+		Name:     data["name"].(string),
 		WxOpenId: data["open_id"].(string),
 		ApiToken: data["api_token"].(string),
-		//Thumb:    data["thumb"].(string),
+		Thumb:    data["thumb"].(string),
 		IsAdmin:  false,
 		MoreJson: data["more_json"],
-		//CreatedAt: data["created_at"].(string),
 		IsEnable: false,
-	})
-	return true
+	}
+
+	db.Create(&user)
+	return
 }
 
 func GetUserIdByToken(token string) int {

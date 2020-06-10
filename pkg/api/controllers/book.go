@@ -89,19 +89,10 @@ func (self *BookController) buildMoreJson() models.BookMoreJson {
 	return structThing
 }
 
-//func (b *book) AfterCreate(scope *gorm.Scope) (err error) {
-//	util.Log.Notice("AfterCreate()")
-//	util.Log.Notice(b)
-//	//if b.ID == 1{
-//	//scope.DB().Model()
-//	//}
-//}
-
 func (self *BookController) Create(c *gin.Context) {
 	var bookDto dto.BookCreateDto
 	bookDto.CreateUserId = jwt.UserId
 	if self.BindAndValidate(c, &bookDto) {
-		//@TODO 准备MoreJson
 		newBook, err := bookModel.Create(bookDto)
 		if err > 0 {
 			fail(c, err)
@@ -160,12 +151,15 @@ func (self BookController) Upload(c *gin.Context) {
 		if err := os.MkdirAll(savePath, os.ModePerm); err != nil {
 			util.Log.Error(err)
 		}
-		fullPath := savePath + "/" + FileName
+		savePath += "/" + FileName
 
-		_ = c.SaveUploadedFile(uploadDto.File, fullPath)
+		_ = c.SaveUploadedFile(uploadDto.File, savePath)
+
 		resp(c, map[string]interface{}{
-			"savePath":  fullPath,
-			"imageName": FileName,
+			"result": map[string]interface{}{
+				"savePath":  getUrl(savePath),
+				"imageName": FileName,
+			},
 		})
 	}
 

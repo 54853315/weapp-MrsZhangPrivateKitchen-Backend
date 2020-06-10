@@ -52,6 +52,8 @@ func InitRouter() *gin.Engine {
 		apiv1.PATCH("/books/status/:id", bookController.ChangeStatus)
 		apiv1.PUT("/books/:id", bookController.Update)
 		apiv1.DELETE("/books/:id", bookController.Delete)
+		apiv1.POST("/books/upload", bookController.Upload)
+		//apiv1.DELETE("/books/upload/:file", bookController.DELETE)
 
 		TagController := &api.TagController{}
 		apiv1.GET("/tags", TagController.List)
@@ -61,6 +63,11 @@ func InitRouter() *gin.Engine {
 
 		UserController := &api.UserController{}
 		apiv1.GET("/user/info", UserController.Get)
+		apiv1.PUT("/user", UserController.Update)
+
+		UploadController := &api.UploadController{}
+		apiv1.POST("/upload", UploadController.Upload)
+		apiv1.DELETE("/upload/:file", UploadController.Delete)
 	}
 
 	return r
