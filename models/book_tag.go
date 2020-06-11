@@ -1,7 +1,7 @@
 package models
 
 type BookTag struct {
-	Model
+	Id     int `gorm:"primary_key" json:"id"`
 	BookId int `json:"book_id"`
 	TagId  int `json:"tag_id"`
 }

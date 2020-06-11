@@ -149,13 +149,6 @@ func (Book) Create(dto dto.BookCreateDto) (Book, int) {
 		util.Log.Notice("bookModel:", book)
 		result := db.Create(&book)
 		if result.Error == nil {
-			//@TODO 创建Tag关联
-			tag := Tag{
-				BookId: book.Id,
-				//Name:   dto.Name,
-			}
-			util.Log.Notice("tagModel:", tag)
-			db.Create(&tag)
 			return book, 0
 		} else {
 			util.Log.Error(result.Error.Error())

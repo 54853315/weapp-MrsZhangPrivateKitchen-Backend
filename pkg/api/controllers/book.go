@@ -98,6 +98,8 @@ func (self *BookController) Create(c *gin.Context) {
 			fail(c, err)
 			return
 		}
+		//查找标签
+		tagModel.CreateTagsByBookStore(newBook.Id, bookDto.Content)
 		resp(c, map[string]interface{}{
 			"result": newBook,
 		})
