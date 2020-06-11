@@ -1,9 +1,11 @@
 package util
 
 import (
+	"FoodBackend/pkg/setting"
 	"github.com/satori/go.uuid"
 	"os"
 	"reflect"
+	"strings"
 )
 
 func IsContain(items []string, item string) bool {
@@ -80,4 +82,14 @@ func GetFileBuff(filepath string) []byte {
 		Log.Fatal(err)
 	}
 	return buff
+}
+
+func GetUrl(uri string) string {
+	//为URI追加本站域名，适合操作图片URL
+	return setting.AppUrl + "/" + uri
+}
+
+func RemoveDomain(url string) string {
+	//移除网址中的本站域名，适合操作图片URL
+	return strings.Replace(url, setting.AppUrl+"/", " ", 1)
 }

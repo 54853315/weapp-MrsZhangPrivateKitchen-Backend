@@ -65,7 +65,3 @@ func getUploadPath() string {
 	}
 	return sec.Key("UPLOAD_SAVE_DIR").String() + "/"
 }
-
-func getUrl(uri string) string {
-	return setting.AppUrl + "/" + uri
-}

@@ -18,6 +18,7 @@ type BookController struct {
 }
 
 var bookModel = models.Book{}
+var imageModel = models.Image{}
 
 type timeLine struct {
 	Date  string        `json:"date"`
@@ -93,17 +94,23 @@ func (self *BookController) Create(c *gin.Context) {
 	var bookDto dto.BookCreateDto
 	bookDto.CreateUserId = jwt.UserId
 	if self.BindAndValidate(c, &bookDto) {
-		newBook, err := bookModel.Create(bookDto)
-		if err > 0 {
-			fail(c, err)
-			return
-		}
-		//查找标签
-		tagModel.CreateTagsByBookStore(newBook.Id, bookDto.Content)
-		resp(c, map[string]interface{}{
-			"result": newBook,
-		})
+		util.Log.Debug(len(bookDto.Files))
 	}
+	newFile := make([]string, len(bookDto.Files))
+	for _, file := range bookDto.Files {
+		newFile = append(newFile, util.RemoveDomain(file))
+	}
+	bookDto.Files = newFile
+	newBook, err := bookModel.Create(bookDto)
+	if err > 0 {
+		fail(c, err)
+		return
+	}
+	//查找标签
+	tagModel.CreateTagsByBookStore(newBook.Id, bookDto.Content)
+	resp(c, map[string]interface{}{
+		"result": newBook,
+	})
 }
 
 func (self *BookController) ChangeStatus(c *gin.Context) {
@@ -133,6 +140,7 @@ func (self *BookController) Delete(c *gin.Context) {
 	var dto dto.GeneralDelDto
 	if self.BindAndValidate(c, &dto) {
 		if bookModel.Delete(&models.Book{Model: models.Model{Id: dto.Id}}) {
+			//@TODO 删除关联的图片文件
 			fail(c, e.ERROR_NOT_EXIST)
 			return
 		}
@@ -157,9 +165,16 @@ func (self BookController) Upload(c *gin.Context) {
 
 		_ = c.SaveUploadedFile(uploadDto.File, savePath)
 
+		uploadDto.Url = savePath
+		_, err := imageModel.Create(uploadDto)
+		if err > 0 {
+			fail(c, err)
+			return
+		}
+
 		resp(c, map[string]interface{}{
 			"result": map[string]interface{}{
-				"savePath":  getUrl(savePath),
+				"savePath":  util.GetUrl(savePath),
 				"imageName": FileName,
 			},
 		})

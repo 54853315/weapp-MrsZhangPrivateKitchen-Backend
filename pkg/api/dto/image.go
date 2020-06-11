@@ -8,4 +8,5 @@ type UploadDto struct {
 	GeneralAuthDto
 	File         *multipart.FileHeader `form:"file,default=0" binding:"required"`
 	CreateUserId int
+	Url          string
 }
