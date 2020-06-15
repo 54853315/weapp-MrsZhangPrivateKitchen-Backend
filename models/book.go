@@ -4,7 +4,6 @@ import (
 	"FoodBackend/pkg/api/dto"
 	"FoodBackend/pkg/e"
 	"FoodBackend/pkg/util"
-	"encoding/json"
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"time"
@@ -21,12 +20,15 @@ type Book struct {
 	MoreJson                BookMoreJson `json:"more_json";gorm:"type:json"`
 	Status                  string       `json:"status"`
 	Tag                     []Tag        `json:"tags";gorm:"many2many:book_tags"`
-	User                    User         `gorm:"-";json:"user";gorm:"foreignkey=CreateUserId;association_foreignkey=CreateUserId"`
-	FileUrlJson             interface{}  `json:"file_url_json";gorm:"type:json"`
+	User                    User         `json:"user" gorm:"-;foreignkey=CreateUserId;association_foreignkey=CreateUserId"`
+	FileUrlJson             NormalJson   `json:"file_url_json" gorm:"column:file_url_json;default:'[]';type:json"`
+
+	// 切片Struct 在 Gorm内不识别，无法进行json数组存储
+	// 具体见：https://github.com/go-gorm/gorm/issues/1879#issuecomment-643954492
+	//FileUrlJson             []FileJson     `json:"file_url_json";gorm:"column:file_url_json;type:json"`
 }
 
 type BookMoreJson struct {
-	Love string
 }
 
 func (book *Book) checkUnique(name string) bool {
@@ -106,16 +108,19 @@ func (Book) ChangeStatus(dto dto.BookChangeDto) int64 {
 }
 
 func (Book) Update(dto dto.BookEditDto) int64 {
-	fileJson, _ := json.Marshal(dto.Files)
+	var fileJson []string
+	for _, file := range dto.Files {
+		if file != "" {
+			fileJson = append(fileJson, file)
+		}
+	}
 	ups := Book{
-		//Name:                    dto.Name,
 		Content:                 dto.Content,
 		AllowComments:           dto.AllowComments,
 		IsShareWeChatFriendZone: dto.IsShareWeChatFriendZone,
 		CreateUserId:            dto.CreateUserId,
-		FileUrlJson:             fileJson,
-		//MoreJson:                data["more_json"].(BookMoreJson),
-		Status: dto.Status,
+		FileUrlJson:             NormalJson{fileJson},
+		Status:                  dto.Status,
 	}
 	util.Log.Notice("bookModel:", ups)
 	affected := db.Model(&Book{Model: Model{Id: dto.Id}}).Update(&ups).RowsAffected
@@ -133,27 +138,28 @@ func (Book) Update(dto dto.BookEditDto) int64 {
 }
 
 func (Book) Create(dto dto.BookCreateDto) (Book, int) {
-	var existOne Book
-	//db.Where("name = ? ", dto.Name).First(&existOne)
-	fileJson, _ := json.Marshal(dto.Files)
-	if existOne.Id == 0 {
-		book := Book{
-			//Name:                    dto.Name,
-			Content:                 dto.Content,
-			AllowComments:           dto.AllowComments,
-			IsShareWeChatFriendZone: dto.IsShareWeChatFriendZone,
-			CreateUserId:            dto.CreateUserId,
-			FileUrlJson:             fileJson,
-			Status:                  dto.Status,
+	var fileJson []string
+	for _, file := range dto.Files {
+		if file != "" {
+			fileJson = append(fileJson, file)
 		}
-		util.Log.Notice("bookModel:", book)
-		result := db.Create(&book)
-		if result.Error == nil {
-			return book, 0
-		} else {
-			util.Log.Error(result.Error.Error())
-			return Book{}, e.ERROR
-		}
+	}
+	book := Book{
+		Content:                 dto.Content,
+		AllowComments:           dto.AllowComments,
+		IsShareWeChatFriendZone: dto.IsShareWeChatFriendZone,
+		CreateUserId:            dto.CreateUserId,
+		FileUrlJson:             NormalJson{fileJson},
+		Status:                  dto.Status,
+	}
+	util.Log.Notice("bookModel:", book)
+	result := db.Debug().Create(&book)
+	util.Log.Debug("报错情况：", result.GetErrors())
+	if result.Error == nil {
+		return book, 0
+	} else {
+		util.Log.Error(result.Error.Error())
+		return Book{}, e.ERROR
 	}
 	return Book{}, e.BOOK_EXISTS
 }

@@ -2,6 +2,10 @@ package models
 
 import (
 	"FoodBackend/pkg/setting"
+	"FoodBackend/pkg/util"
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -15,7 +19,29 @@ var db *gorm.DB
 type Model struct {
 	Id        int       `gorm:"primary_key" json:"id"`
 	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	UpdatedAt time.Time `json:"-"`
+}
+
+type NormalJson struct {
+	V []string
+}
+
+func (f NormalJson) Value() (driver.Value, error) {
+	b, err := json.Marshal(f.V)
+	return string(b), err
+}
+
+func (f *NormalJson) Scan(input interface{}) error {
+	switch value := input.(type) {
+	case string:
+		util.Log.Debug("string")
+		return json.Unmarshal([]byte(value), &f.V)
+	case []byte:
+		util.Log.Debug("[]byte")
+		return json.Unmarshal(value, &f.V)
+	default:
+		return errors.New("not supported")
+	}
 }
 
 func init() {
@@ -52,7 +78,7 @@ func init() {
 
 	//db.SingularTable(true)
 	// 启用Logger，显示详细日志
-	db.LogMode(true)
+	//db.LogMode(true)
 	db.DB().SetMaxIdleConns(10)
 	db.DB().SetMaxOpenConns(100)
 }

@@ -37,6 +37,8 @@ func (self *BookController) timeLine(books []models.Book) []timeLine { //NOTE åˆ
 
 		for timelineKey, timelineItem := range timelines {
 			if timelineItem.Date == dateString {
+				//for _,image := range books[i].FileUrlJson{
+				//}
 				timelines[timelineKey].Books = append(timelines[timelineKey].Books, books[i])
 				existsDateInStrut = true
 			}
@@ -71,12 +73,11 @@ func (self *BookController) Get(c *gin.Context) {
 	if self.BindAndValidate(c, &gDto) {
 		data := bookModel.Get(gDto)
 		//book not found
-		if gDto.Id < 1 {
+		if data.Id < 1 {
 			fail(c, e.ERROR_NOT_EXIST)
 			return
 		}
-		// todo: get feature permission list
-		// data permission list
+
 		resp(c, map[string]interface{}{
 			"result": map[string]interface{}{
 				"detail": data,
@@ -85,10 +86,10 @@ func (self *BookController) Get(c *gin.Context) {
 	}
 }
 
-func (self *BookController) buildMoreJson() models.BookMoreJson {
-	structThing := models.BookMoreJson{Love: "HAHA"}
-	return structThing
-}
+//func (self *BookController) buildMoreJson() models.BookMoreJson {
+//	structThing := models.BookMoreJson{Love: "HAHA"}
+//	return structThing
+//}
 
 func (self *BookController) Create(c *gin.Context) {
 	var bookDto dto.BookCreateDto
