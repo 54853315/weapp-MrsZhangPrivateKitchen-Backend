@@ -22,16 +22,36 @@ type Model struct {
 	UpdatedAt time.Time `json:"-"`
 }
 
-type NormalJson struct {
-	V []string
-}
+type NormalJson []string
 
 func (f NormalJson) Value() (driver.Value, error) {
-	b, err := json.Marshal(f.V)
+	b, err := json.Marshal(f)
 	return string(b), err
 }
 
 func (f *NormalJson) Scan(input interface{}) error {
+	switch value := input.(type) {
+	case string:
+		util.Log.Debug("string")
+		return json.Unmarshal([]byte(value), &f)
+	case []byte:
+		util.Log.Debug("[]byte")
+		return json.Unmarshal(value, &f)
+	default:
+		return errors.New("not supported")
+	}
+}
+
+type MultiJson struct {
+	V []string
+}
+
+func (f MultiJson) Value() (driver.Value, error) {
+	b, err := json.Marshal(f.V)
+	return string(b), err
+}
+
+func (f *MultiJson) Scan(input interface{}) error {
 	switch value := input.(type) {
 	case string:
 		util.Log.Debug("string")

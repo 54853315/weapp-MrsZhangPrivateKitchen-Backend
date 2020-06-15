@@ -119,7 +119,7 @@ func (Book) Update(dto dto.BookEditDto) int64 {
 		AllowComments:           dto.AllowComments,
 		IsShareWeChatFriendZone: dto.IsShareWeChatFriendZone,
 		CreateUserId:            dto.CreateUserId,
-		FileUrlJson:             NormalJson{fileJson},
+		FileUrlJson:             fileJson,
 		Status:                  dto.Status,
 	}
 	util.Log.Notice("bookModel:", ups)
@@ -149,7 +149,7 @@ func (Book) Create(dto dto.BookCreateDto) (Book, int) {
 		AllowComments:           dto.AllowComments,
 		IsShareWeChatFriendZone: dto.IsShareWeChatFriendZone,
 		CreateUserId:            dto.CreateUserId,
-		FileUrlJson:             NormalJson{fileJson},
+		FileUrlJson:             fileJson,
 		Status:                  dto.Status,
 	}
 	util.Log.Notice("bookModel:", book)
