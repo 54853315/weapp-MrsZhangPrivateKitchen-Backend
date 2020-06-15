@@ -7,15 +7,15 @@ import (
 
 type User struct {
 	Model
-	ApiToken string
-	MoreJson interface{} `sql:"TYPE:json"`
+	ApiToken string      `json:"-"`
+	MoreJson interface{} `json:"-" sql:"TYPE:json"`
 	Thumb    string      `json:"thumb"`
-	IsAdmin  bool        `json:"is_admin"`
-	IsEnable bool        `json:"is_enable"`
-	WxOpenId string      `json:"wx_open_id"`
+	IsAdmin  bool        `json:"-"`
+	IsEnable bool        `json:"-"`
+	WxOpenId string      `json:"-"`
 	Name     string      `json:"name"`
-	Password string      `json:"password"`
-	Book     []Book      `gorm:"foreignkey=CreateUserId";json:"books"`
+	Password string      `json:"-"`
+	Book     []Book      `gorm:"foreignkey=CreateUserId" json:"books"`
 }
 
 type UserMoreJson struct {
