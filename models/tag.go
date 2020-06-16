@@ -34,8 +34,9 @@ func ExistsTagById(id int) bool {
 }
 
 // NOTE 等gorm官方升级后解决many2many + preload 的rows bug后，可以不用这个方法拿数据了
-func (tag *Tag) GetTagsByBookId(bookId int) (tags []Tag) {
-	db.Where("id IN (?)", db.Table("book_tags").Select("tag_id").Where("book_id = ?", bookId).SubQuery()).Find(&tags)
+func (tag *Tag) GetTagsByBookId(bookId int) (count int64) {
+	subQuery := db.Table("book_tags").Select("tag_id").Where("book_id = ?", bookId).SubQuery()
+	count = db.Where("id IN (?)", subQuery).Find(&tag).RowsAffected
 	return
 }
 

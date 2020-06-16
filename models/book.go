@@ -93,8 +93,9 @@ func (Book) Get(dto dto.GeneralGetDto) (book Book) {
 	db.Where("id=?", dto.Id).Find(&book)
 	db.Model(&book).Related(&book.User, "CreateUserId")
 	var tags Tag
-	tags.GetTagsByBookId(dto.Id)
-	book.Tag = []Tag{tags}
+	if tags.GetTagsByBookId(dto.Id) > 0 {
+		book.Tag = []Tag{tags}
+	}
 	return
 }
 
