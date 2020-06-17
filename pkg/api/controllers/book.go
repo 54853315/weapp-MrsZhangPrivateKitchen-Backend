@@ -140,7 +140,6 @@ func (self *BookController) Delete(c *gin.Context) {
 	var dto dto.GeneralDelDto
 	if self.BindAndValidate(c, &dto) {
 		if bookModel.Delete(&models.Book{Model: models.Model{Id: dto.Id}}) {
-			//@TODO 删除关联的图片文件
 			fail(c, e.ERROR_NOT_EXIST)
 			return
 		}

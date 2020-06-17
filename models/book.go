@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jinzhu/gorm"
+	"os"
 	"time"
 )
 
@@ -33,6 +34,8 @@ type Book struct {
 type FileJson NormalJson
 
 func (f *FileJson) MarshalJSON() ([]byte, error) {
+	util.Log.Notice("MarshalJSON")
+	//@TODO List会走这个方法，而Get不会
 	var jsonArr []string
 	for _, v := range *f {
 		jsonArr = append(jsonArr, util.GetUrl(string(v)))
@@ -188,17 +191,19 @@ func (Book) Create(dto dto.BookCreateDto) (Book, int) {
 }
 
 func (Book) Delete(book *Book) bool {
-	//db.Delete(&Book{}, "id = ?", id)
-	if db.Delete(book).GetErrors() == nil {
-		return true
+	if book.Id > 0 {
+		db.Model(book).Find(&book)
+		if db.Delete(book).GetErrors() == nil {
+			return true
+		}
 	}
 	return false
 }
 
-// 在一个事务中更新数据
 func (book *Book) AfterDelete(tx *gorm.DB) (err error) {
-	if len(book.FileUrlJson) > 0 {
-
+	for _, file := range book.FileUrlJson {
+		_ = os.Remove(file)
 	}
-	return
+	db.Delete(&BookTag{}, "book_id = ? ", book.Id).GetErrors()
+	return err
 }
