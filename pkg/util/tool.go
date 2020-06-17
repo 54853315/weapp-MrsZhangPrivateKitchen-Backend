@@ -86,10 +86,14 @@ func GetFileBuff(filepath string) []byte {
 
 func GetUrl(uri string) string {
 	//为URI追加本站域名，适合操作图片URL
-	return setting.AppUrl + "/" + uri
+	//Log.Debugf("网址%s，检测http的结果值为%d", uri, strings.Index(uri, "http"))
+	if strings.Index(uri, "http") == -1 {
+		return setting.AppUrl + "/" + uri
+	}
+	return uri
 }
 
 func RemoveDomain(url string) string {
 	//移除网址中的本站域名，适合操作图片URL
-	return strings.Replace(url, setting.AppUrl+"/", " ", 1)
+	return strings.Replace(url, setting.AppUrl+"/", "", 1)
 }

@@ -32,10 +32,10 @@ func (f NormalJson) Value() (driver.Value, error) {
 func (f *NormalJson) Scan(input interface{}) error {
 	switch value := input.(type) {
 	case string:
-		util.Log.Debug("string")
+		//util.Log.Debug("string")
 		return json.Unmarshal([]byte(value), &f)
 	case []byte:
-		util.Log.Debug("[]byte")
+		//util.Log.Debug("[]byte")
 		return json.Unmarshal(value, &f)
 	default:
 		return errors.New("not supported")

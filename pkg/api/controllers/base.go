@@ -6,7 +6,10 @@ import (
 	"FoodBackend/pkg/setting"
 	"FoodBackend/pkg/util"
 	"github.com/gin-gonic/gin"
+	"io/ioutil"
 	"net/http"
+	"os"
+	"path/filepath"
 )
 
 type BaseController struct {
@@ -64,4 +67,25 @@ func getUploadPath() string {
 		util.Log.Fatal("Fail to get section 'upload': %v", err)
 	}
 	return sec.Key("UPLOAD_SAVE_DIR").String() + "/"
+}
+
+func CleanUploadEmptySubDir() {
+	//删除空的目录
+	dirNames := make([]string, 0)
+	uploadPath := getUploadPath()
+	_ = filepath.Walk(uploadPath, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			dirNames = append(dirNames, path)
+		}
+		return nil
+	})
+
+	for i := len(dirNames) - 1; i >= 0; i-- {
+		if dir, _ := ioutil.ReadDir(dirNames[i]); len(dir) == 0 {
+			if err := os.Remove(dirNames[i]); err != nil {
+				util.Log.Errorf("Empty dir %s remove fail . ", dirNames[i], err)
+			}
+		}
+	}
+
 }

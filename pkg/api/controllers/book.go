@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -30,6 +31,12 @@ func (self *BookController) timeLine(books []models.Book) []timeLine { //NOTE �
 	var timelines []timeLine
 
 	for i := 0; i < len(books); i++ {
+		//@TODO 改一种方式封装实现
+		for fk, image := range books[i].FileUrlJson {
+			books[i].FileUrlJson[fk] = util.GetUrl(image)
+			util.Log.Notice("图片地址补全后：", books[i].FileUrlJson[fk])
+		}
+
 		day := books[i].CreatedAt.Day()
 		month := int(books[i].CreatedAt.Month())
 		dateString := fmt.Sprintf("%0d-%d", month, day)
@@ -37,8 +44,6 @@ func (self *BookController) timeLine(books []models.Book) []timeLine { //NOTE �
 
 		for timelineKey, timelineItem := range timelines {
 			if timelineItem.Date == dateString {
-				//for _,image := range books[i].FileUrlJson{
-				//}
 				timelines[timelineKey].Books = append(timelines[timelineKey].Books, books[i])
 				existsDateInStrut = true
 			}
@@ -147,6 +152,58 @@ func (self *BookController) Delete(c *gin.Context) {
 		}
 		ok(c, e.SUCCESS)
 	}
+}
+
+func (self BookController) ClearPictureBeforeDisplayCreate(c *gin.Context) {
+	var allFiles []string
+	var usedFiles []string
+	uploadPath := getUploadPath()
+	_ = filepath.Walk(uploadPath, func(path string, info os.FileInfo, err error) error {
+		//获取当前目录下的所有文件或目录信息
+		if !info.IsDir() {
+			allFiles = append(allFiles, path)
+		}
+		return nil
+	})
+
+	books := bookModel.All(map[string]interface{}{
+		"create_user_id": string(jwt.UserId),
+	})
+	for _, book := range books {
+		for _, bookFiles := range book.FileUrlJson {
+			usedFiles = append(usedFiles, bookFiles)
+		}
+	}
+
+	util.Log.Noticef("找到的总文件数：%d，已使用的总文件数：%d。", len(allFiles), len(usedFiles))
+
+	breakFor := false
+	for _, file := range allFiles {
+		for _, useFile := range usedFiles {
+			if useFile == file {
+				util.Log.Noticef("找到了一个正在使用中的文件，此文件不会被删除%s ", file)
+				breakFor = true
+			}
+		}
+
+		if breakFor {
+			breakFor = false
+			break
+		}
+
+		util.Log.Noticef("---开始删除文件！%s", file)
+
+		if err := os.Remove(file); err != nil {
+			util.Log.Errorf("删除文件失败：", err)
+		}
+
+	}
+
+	CleanUploadEmptySubDir()
+
+	resp(c, map[string]interface{}{
+		"result": books,
+	})
 }
 
 func (self BookController) Upload(c *gin.Context) {
