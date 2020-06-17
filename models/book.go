@@ -4,6 +4,8 @@ import (
 	"FoodBackend/pkg/api/dto"
 	"FoodBackend/pkg/e"
 	"FoodBackend/pkg/util"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"time"
@@ -21,11 +23,29 @@ type Book struct {
 	Status                  string       `json:"status"`
 	Tag                     []Tag        `json:"tags";gorm:"many2many:book_tags"`
 	User                    User         `json:"user" gorm:"-;foreignkey=CreateUserId;association_foreignkey=CreateUserId"`
-	FileUrlJson             NormalJson   `json:"file_url_json" gorm:"column:file_url_json;default:'[]';type:json"`
+	FileUrlJson             FileJson     `json:"file_url_json" gorm:"column:file_url_json;default:'[]';type:json"`
 
-	// 切片Struct 在 Gorm内不识别，无法进行json数组存储
+	// NOTE 切片Struct 在 Gorm内不识别，无法进行json数组存储
 	// 具体见：https://github.com/go-gorm/gorm/issues/1879#issuecomment-643954492
 	//FileUrlJson             []FileJson     `json:"file_url_json";gorm:"column:file_url_json;type:json"`
+}
+
+type FileJson NormalJson
+
+func (f *FileJson) MarshalJSON() ([]byte, error) {
+	var jsonArr []string
+	for _, v := range *f {
+		jsonArr = append(jsonArr, util.GetUrl(string(v)))
+	}
+	return json.Marshal(jsonArr)
+}
+func (f *FileJson) Scan(input interface{}) error {
+	switch value := input.(type) {
+	case []byte:
+		return json.Unmarshal(value, &f)
+	default:
+		return errors.New("not supported")
+	}
 }
 
 type BookMoreJson struct {
@@ -55,7 +75,12 @@ func (Book) GetByCon(maps interface{}) Book {
 	return book
 }
 
-func (model *Book) List(listDto dto.GeneralListDto) (books []Book, total int64) {
+func (book Book) All(where map[string]interface{}) (books []Book) {
+	db.Model(book).Where(where).Find(&books)
+	return books
+}
+
+func (book *Book) List(listDto dto.GeneralListDto) (books []Book, total int64) {
 
 	var tag Tag
 	allRelationTags := tag.GetAllRelatedTags()
@@ -67,9 +92,9 @@ func (model *Book) List(listDto dto.GeneralListDto) (books []Book, total int64) 
 			db = db.Where(fmt.Sprintf("%s = ?", sk), sv)
 		}
 	}
-	//db.Model(model).Related(&model.User,"CreateUserId").Offset(listDto.Skip).Limit(listDto.Limit).Find(&books)	//NOTE not working
+	//db.Model(book).Related(&book.User,"CreateUserId").Offset(listDto.Skip).Limit(listDto.Limit).Find(&books)	//NOTE not working
 	//@TODO 如果未登录，则强制只能看发布的books
-	db.Model(model).Where("status = ?", "publish").Offset(listDto.Skip).Limit(listDto.Limit).Order("created_at DESC", true).Find(&books)
+	db.Model(book).Where("status = ?", "publish").Offset(listDto.Skip).Limit(listDto.Limit).Order("created_at DESC", true).Find(&books)
 
 	for bookIndex, book := range books {
 		if book.CreateUserId > 0 {
@@ -86,9 +111,6 @@ func (model *Book) List(listDto dto.GeneralListDto) (books []Book, total int64) 
 }
 
 func (Book) Get(dto dto.GeneralGetDto) (book Book) {
-	//if me > 0 {
-	//	db.Where("create_user_id=?", me)
-	//}
 	//db.Preload("Tag").Where("id=?", dto.Id).Find(&book)	//NOTE 因官方这个many2many + preload有返回行数的Bug，所以不用
 	db.Where("id=?", dto.Id).Find(&book)
 	db.Model(&book).Related(&book.User, "CreateUserId")
@@ -171,4 +193,12 @@ func (Book) Delete(book *Book) bool {
 		return true
 	}
 	return false
+}
+
+// 在一个事务中更新数据
+func (book *Book) AfterDelete(tx *gorm.DB) (err error) {
+	if len(book.FileUrlJson) > 0 {
+
+	}
+	return
 }

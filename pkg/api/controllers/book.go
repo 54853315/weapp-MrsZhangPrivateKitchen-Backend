@@ -31,12 +31,6 @@ func (self *BookController) timeLine(books []models.Book) []timeLine { //NOTE �
 	var timelines []timeLine
 
 	for i := 0; i < len(books); i++ {
-		//@TODO 改一种方式封装实现
-		for fk, image := range books[i].FileUrlJson {
-			books[i].FileUrlJson[fk] = util.GetUrl(image)
-			util.Log.Notice("图片地址补全后：", books[i].FileUrlJson[fk])
-		}
-
 		day := books[i].CreatedAt.Day()
 		month := int(books[i].CreatedAt.Month())
 		dateString := fmt.Sprintf("%0d-%d", month, day)
@@ -175,13 +169,12 @@ func (self BookController) ClearPictureBeforeDisplayCreate(c *gin.Context) {
 		}
 	}
 
-	util.Log.Noticef("找到的总文件数：%d，已使用的总文件数：%d。", len(allFiles), len(usedFiles))
+	//util.Log.Noticef("找到的总文件数：%d，已使用的总文件数：%d。", len(allFiles), len(usedFiles))
 
 	breakFor := false
 	for _, file := range allFiles {
 		for _, useFile := range usedFiles {
 			if useFile == file {
-				util.Log.Noticef("找到了一个正在使用中的文件，此文件不会被删除%s ", file)
 				breakFor = true
 			}
 		}
@@ -190,8 +183,6 @@ func (self BookController) ClearPictureBeforeDisplayCreate(c *gin.Context) {
 			breakFor = false
 			break
 		}
-
-		util.Log.Noticef("---开始删除文件！%s", file)
 
 		if err := os.Remove(file); err != nil {
 			util.Log.Errorf("删除文件失败：", err)
