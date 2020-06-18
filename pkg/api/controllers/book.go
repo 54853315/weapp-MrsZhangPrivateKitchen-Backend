@@ -79,7 +79,7 @@ func (self *BookController) Get(c *gin.Context) {
 
 		resp(c, map[string]interface{}{
 			"result": map[string]interface{}{
-				"detail": data,
+				"detail": &data, //如果此处不使用&data，则MarshalJSON()并不会执行
 			},
 		})
 	}

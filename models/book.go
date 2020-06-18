@@ -34,15 +34,15 @@ type Book struct {
 type FileJson NormalJson
 
 func (f *FileJson) MarshalJSON() ([]byte, error) {
-	util.Log.Notice("MarshalJSON")
-	//@TODO List会走这个方法，而Get不会
 	var jsonArr []string
 	for _, v := range *f {
 		jsonArr = append(jsonArr, util.GetUrl(string(v)))
 	}
 	return json.Marshal(jsonArr)
 }
+
 func (f *FileJson) Scan(input interface{}) error {
+	util.Log.Notice("Scan()")
 	switch value := input.(type) {
 	case []byte:
 		return json.Unmarshal(value, &f)
