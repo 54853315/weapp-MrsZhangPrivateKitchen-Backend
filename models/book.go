@@ -92,28 +92,29 @@ func (book *Book) List(listDto dto.GeneralListDto) (books []Book, total int64) {
 
 	var tag Tag
 	allRelationTags := tag.GetAllRelatedTags()
+	searchDb := db.New()
 
 	for sk, sv := range dto.TransformSearch(listDto.Q, dto.BookListSearchMapping) {
 		if sk == "name" {
-			db = db.Where(fmt.Sprintf("%s LIKE ?", sk), "%"+sv+"%")
+			searchDb = searchDb.Where(fmt.Sprintf("%s LIKE ?", sk), "%"+sv+"%")
 		} else {
-			db = db.Where(fmt.Sprintf("%s = ?", sk), sv)
+			searchDb = searchDb.Where(fmt.Sprintf("%s = ?", sk), sv)
 		}
 	}
 	//db.Model(book).Related(&book.User,"CreateUserId").Offset(listDto.Skip).Limit(listDto.Limit).Find(&books)	//NOTE not working
 	//如果未登录，则强制只能看发布的books
 	if listDto.CreateUserId == 0 {
-		db = db.Model(book).Where("status = ?", "publish")
+		searchDb = searchDb.Model(book).Where("status = ?", "publish")
 	}
 
-	db.Offset(listDto.Skip).Limit(listDto.Limit).Order("created_at DESC", true).Find(&books)
+	searchDb.Offset(listDto.Skip).Limit(listDto.Limit).Order("created_at DESC", true).Find(&books)
 
-	db.Model(&books).Count(&total)
+	searchDb.Model(&books).Count(&total)
 
 	// 关联用户和标签
 	for bookIndex, book := range books {
 		if book.CreateUserId > 0 {
-			db.New().Model(&books[bookIndex]).Related(&books[bookIndex].User, "CreateUserId")
+			db.Model(&books[bookIndex]).Related(&books[bookIndex].User, "CreateUserId")
 		}
 		for _, tag := range allRelationTags {
 			if tag.BookId == book.Id {
