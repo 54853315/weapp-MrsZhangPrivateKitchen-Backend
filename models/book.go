@@ -4,27 +4,28 @@ import (
 	"FoodBackend/pkg/api/dto"
 	"FoodBackend/pkg/e"
 	"FoodBackend/pkg/util"
+	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"os"
+	"strings"
 	"time"
 )
 
 type Book struct {
 	Model
 	//TypeId     int    `json:"type_id" gorm:"index"` //声明索引，如果你使用了自动迁移功能则会有所影响，在不使用则无影响
-	Name                    string       `json:"name" gorm:"type:varchar(50);unique_index"`
-	Content                 string       `json:"content"`
-	AllowComments           int          `json:"allow_comments"`
-	CreateUserId            int          `json:"create_user_id"`
-	IsShareWeChatFriendZone int          `json:"is_share_wechat_friend_zone" gorm:"column:is_share_wechat_friend_zone"`
-	MoreJson                BookMoreJson `json:"more_json";gorm:"type:json"`
-	Status                  string       `json:"status"`
-	Tag                     []Tag        `json:"tags";gorm:"many2many:book_tags"`
-	User                    User         `json:"user" gorm:"-;foreignkey=CreateUserId;association_foreignkey=CreateUserId"`
-	FileUrlJson             FileJson     `json:"file_url_json" gorm:"column:file_url_json;default:'[]';type:json"`
+	Name          string       `json:"name" gorm:"type:varchar(50);unique_index"`
+	Content       string       `json:"content"`
+	AllowComments int          `json:"allow_comments"`
+	CreateUserId  int          `json:"create_user_id"`
+	MoreJson      BookMoreJson `json:"more_json";gorm:"type:json"`
+	Status        string       `json:"status"`
+	Tag           []Tag        `json:"tags";gorm:"many2many:book_tags"`
+	User          User         `json:"user" gorm:"-;foreignkey=CreateUserId;association_foreignkey=CreateUserId"`
+	FileUrlJson   FileJson     `json:"file_url_json" gorm:"column:file_url_json;default:'[]';type:json"`
 
 	// NOTE 切片Struct 在 Gorm内不识别，无法进行json数组存储
 	// 具体见：https://github.com/go-gorm/gorm/issues/1879#issuecomment-643954492
@@ -32,6 +33,11 @@ type Book struct {
 }
 
 type FileJson NormalJson
+
+func (f FileJson) Value() (driver.Value, error) {
+	b, err := json.Marshal(f)
+	return string(b), err
+}
 
 func (f *FileJson) MarshalJSON() ([]byte, error) {
 	var jsonArr []string
@@ -42,7 +48,6 @@ func (f *FileJson) MarshalJSON() ([]byte, error) {
 }
 
 func (f *FileJson) Scan(input interface{}) error {
-	util.Log.Notice("Scan()")
 	switch value := input.(type) {
 	case []byte:
 		return json.Unmarshal(value, &f)
@@ -96,12 +101,19 @@ func (book *Book) List(listDto dto.GeneralListDto) (books []Book, total int64) {
 		}
 	}
 	//db.Model(book).Related(&book.User,"CreateUserId").Offset(listDto.Skip).Limit(listDto.Limit).Find(&books)	//NOTE not working
-	//@TODO 如果未登录，则强制只能看发布的books
-	db.Model(book).Where("status = ?", "publish").Offset(listDto.Skip).Limit(listDto.Limit).Order("created_at DESC", true).Find(&books)
+	//如果未登录，则强制只能看发布的books
+	if listDto.CreateUserId == 0 {
+		db = db.Model(book).Where("status = ?", "publish")
+	}
 
+	db.Offset(listDto.Skip).Limit(listDto.Limit).Order("created_at DESC", true).Find(&books)
+
+	db.Model(&books).Count(&total)
+
+	// 关联用户和标签
 	for bookIndex, book := range books {
 		if book.CreateUserId > 0 {
-			db.Model(&books[bookIndex]).Related(&books[bookIndex].User, "CreateUserId")
+			db.New().Model(&books[bookIndex]).Related(&books[bookIndex].User, "CreateUserId")
 		}
 		for _, tag := range allRelationTags {
 			if tag.BookId == book.Id {
@@ -109,7 +121,6 @@ func (book *Book) List(listDto dto.GeneralListDto) (books []Book, total int64) {
 			}
 		}
 	}
-	db.Model(&books).Count(&total)
 	return books, total
 }
 
@@ -141,12 +152,11 @@ func (Book) Update(dto dto.BookEditDto) int64 {
 		}
 	}
 	ups := Book{
-		Content:                 dto.Content,
-		AllowComments:           dto.AllowComments,
-		IsShareWeChatFriendZone: dto.IsShareWeChatFriendZone,
-		CreateUserId:            dto.CreateUserId,
-		FileUrlJson:             fileJson,
-		Status:                  dto.Status,
+		Content:       strings.ReplaceAll(dto.Content, "\\n", ""),
+		AllowComments: dto.AllowComments,
+		CreateUserId:  dto.CreateUserId,
+		FileUrlJson:   fileJson,
+		Status:        dto.Status,
 	}
 	util.Log.Notice("bookModel:", ups)
 	affected := db.Model(&Book{Model: Model{Id: dto.Id}}).Update(&ups).RowsAffected
@@ -171,12 +181,11 @@ func (Book) Create(dto dto.BookCreateDto) (Book, int) {
 		}
 	}
 	book := Book{
-		Content:                 dto.Content,
-		AllowComments:           dto.AllowComments,
-		IsShareWeChatFriendZone: dto.IsShareWeChatFriendZone,
-		CreateUserId:            dto.CreateUserId,
-		FileUrlJson:             fileJson,
-		Status:                  dto.Status,
+		Content:       strings.ReplaceAll(dto.Content, "\\n", ""),
+		AllowComments: dto.AllowComments,
+		CreateUserId:  dto.CreateUserId,
+		FileUrlJson:   fileJson,
+		Status:        dto.Status,
 	}
 	util.Log.Notice("bookModel:", book)
 	result := db.Debug().Create(&book)
