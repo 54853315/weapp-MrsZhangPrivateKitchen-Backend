@@ -7,6 +7,7 @@ import (
 
 // GeneralListDto - General list request params
 type GeneralListDto struct {
+	GeneralAuthDto
 	Skip  int    `form:"skip,default=0" json:"skip"`
 	Limit int    `form:"limit,default=20" json:"limit" binding:"max=10000"`
 	Order string `form:"order" json:"order"`

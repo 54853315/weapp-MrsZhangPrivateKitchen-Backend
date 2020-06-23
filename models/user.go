@@ -61,7 +61,7 @@ func (User) Get(id int) (user User) {
 }
 
 func (User) Update(id int, data interface{}) bool {
-	db.Model(&User{}).Where("id = ?", id).Updates(data)
+	db.Debug().Model(&User{}).Where("id = ?", id).Updates(data)
 	return true
 }
 
@@ -77,7 +77,7 @@ func (User) Create(data map[string]interface{}) (user User) {
 		IsEnable: false,
 	}
 
-	db.Create(&user)
+	db.Debug().Create(&user)
 	return
 }
 

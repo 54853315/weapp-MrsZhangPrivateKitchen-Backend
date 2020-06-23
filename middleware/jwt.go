@@ -2,13 +2,11 @@ package middleware
 
 import (
 	"FoodBackend/models"
-	"net/http"
-	"time"
-
-	"github.com/gin-gonic/gin"
-
 	"FoodBackend/pkg/e"
 	"FoodBackend/pkg/util"
+	"github.com/gin-gonic/gin"
+	"net/http"
+	"time"
 )
 
 var UserId int
@@ -20,10 +18,12 @@ func JWT() gin.HandlerFunc {
 		var data interface{}
 		code = e.SUCCESS
 		token := util.GetToken(c)
+		util.Log.Debug("token", token)
 		if token == "" {
 			code = e.UNAUTHORIZED
 		} else {
 			claims, err := util.ParseToken(token)
+			util.Log.Debug("err", err)
 			if err != nil {
 				code = e.ERROR_AUTH_CHECK_TOKEN_FAIL
 			} else if time.Now().Unix() > claims.ExpiresAt {

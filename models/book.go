@@ -161,17 +161,7 @@ func (Book) Update(dto dto.BookEditDto) int64 {
 	}
 	util.Log.Notice("bookModel:", ups)
 	affected := db.Model(&Book{Model: Model{Id: dto.Id}}).Update(&ups).RowsAffected
-
-	if affected > 0 {
-		//@TODO 创建Tag关联，还要去除多余的关联
-		tag := Tag{
-			BookId: ups.Id,
-			//Name:   dto.Name,
-		}
-		util.Log.Notice("tagModel:", tag)
-		//db.Create(&tag)
-	}
-	return 0
+	return affected
 }
 
 func (Book) Create(dto dto.BookCreateDto) (Book, int) {

@@ -47,9 +47,14 @@ func (Tag) GetAllRelatedTags() (tags []Tag) {
 
 //创建标签关联
 func (Tag) CreateTagsByBookStore(bookId int, content string) {
+	if bookId <= 0 {
+		return
+	}
 	const tagReg = "#([0-9a-zA-Z]+) "
 	compile := regexp.MustCompile(tagReg)
 	subMatch := compile.FindAllSubmatch([]byte(content), -1)
+	BookTagDb := db.New()
+	BookTagDb.Model(BookTag{}).Where("book_id = ?", bookId).Delete(BookTag{})
 	for _, m := range subMatch {
 		util.Log.Noticef("开始处理查找到的标签%s", string(m[1]))
 		tag := Tag{

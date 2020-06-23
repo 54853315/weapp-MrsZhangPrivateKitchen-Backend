@@ -94,23 +94,22 @@ func (self *BookController) Create(c *gin.Context) {
 	var bookDto dto.BookCreateDto
 	bookDto.CreateUserId = jwt.UserId
 	if self.BindAndValidate(c, &bookDto) {
-		util.Log.Debug(len(bookDto.Files))
+		newFile := make([]string, len(bookDto.Files))
+		for _, file := range bookDto.Files {
+			newFile = append(newFile, util.RemoveDomain(file))
+		}
+		bookDto.Files = newFile
+		newBook, err := bookModel.Create(bookDto)
+		if err > 0 {
+			fail(c, err)
+			return
+		}
+		//查找标签
+		tagModel.CreateTagsByBookStore(newBook.Id, bookDto.Content)
+		resp(c, map[string]interface{}{
+			"result": newBook,
+		})
 	}
-	newFile := make([]string, len(bookDto.Files))
-	for _, file := range bookDto.Files {
-		newFile = append(newFile, util.RemoveDomain(file))
-	}
-	bookDto.Files = newFile
-	newBook, err := bookModel.Create(bookDto)
-	if err > 0 {
-		fail(c, err)
-		return
-	}
-	//查找标签
-	tagModel.CreateTagsByBookStore(newBook.Id, bookDto.Content)
-	resp(c, map[string]interface{}{
-		"result": newBook,
-	})
 }
 
 func (self *BookController) ChangeStatus(c *gin.Context) {
@@ -128,10 +127,15 @@ func (self *BookController) Update(c *gin.Context) {
 	var bookDto dto.BookEditDto
 	bookDto.CreateUserId = jwt.UserId
 	if self.BindAndValidate(c, &bookDto) {
-		if bookModel.Update(bookDto) < 0 {
+		if bookModel.Update(bookDto) <= 0 {
 			fail(c, e.ERROR)
 			return
 		}
+		//查找标签
+		tagModel.CreateTagsByBookStore(bookDto.Id, bookDto.Content)
+		resp(c, map[string]interface{}{
+			"result": bookDto,
+		})
 		ok(c, e.SUCCESS)
 	}
 }
@@ -139,7 +143,7 @@ func (self *BookController) Update(c *gin.Context) {
 func (self *BookController) Delete(c *gin.Context) {
 	var dto dto.GeneralDelDto
 	if self.BindAndValidate(c, &dto) {
-		if bookModel.Delete(&models.Book{Model: models.Model{Id: dto.Id}}) {
+		if bookModel.Delete(&models.Book{CreateUserId: dto.CreateUserId, Model: models.Model{Id: dto.Id}}) {
 			fail(c, e.ERROR_NOT_EXIST)
 			return
 		}

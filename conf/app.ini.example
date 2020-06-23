@@ -4,6 +4,7 @@ RUN_MODE = debug
 [app]
 PAGE_SIZE = 10
 JWT_SECRET = 23347$040412
+URL = http://127.0.0.1:8080
 
 [server]
 HTTP_PORT = 8000
@@ -22,4 +23,7 @@ TABLE_PREFIX = blog_
 [wechat]
 APP_ID=小程序ID
 APP_SECRET=小程序密鑰
+
+[upload]
+UPLOAD_SAVE_DIR = uploads
 
