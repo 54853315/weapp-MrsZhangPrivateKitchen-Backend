@@ -34,7 +34,7 @@ export GO111MODULE=on
 >前提是 GOMODULE 环境变量的值必须是auto 或 off
 
 ``` shell
-cd FoodBackend
+cd weapp-MrsZhangPrivateKitchen-Backend
 ln -s $(PWD) ~/go/src/
 ```
 
@@ -54,7 +54,7 @@ ln -s $(PWD) ~/go/src/
 
 
 ```
-cd FoodBackend
+cd weapp-MrsZhangPrivateKitchen-Backend
 go run main.go 
 ```
 
@@ -63,7 +63,7 @@ go run main.go
 准备了docker-compose和Dockerfile（方便自动化构建），容器外部访问端口为`8881`。
 
 ```
-cd FoodBackend
+cd weapp-MrsZhangPrivateKitchen-Backend
 docker-compose up -d
 curl localhost:8881/api/books/
 ```
