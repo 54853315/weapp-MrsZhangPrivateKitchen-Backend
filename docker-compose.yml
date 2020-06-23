@@ -1,0 +1,14 @@
+version: '3'
+services:
+  golang:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8881:8080"
+    networks:
+      - food-union
+networks:
+  food-union:
+    driver: bridge

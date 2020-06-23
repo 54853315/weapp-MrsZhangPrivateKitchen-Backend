@@ -15,18 +15,19 @@
 
 ## 快速开始
 
-> 本操作在macos 、 linux 下生效，需要golang 1.11+  编译环境,设置git clone 权限
+> 本操作在macos 、 linux 下生效，需要golang 1.11+  编译环境。
 
 ```
 git clone git@github.com:54853315/weapp-MrsZhangPrivateKitchen-Backend.git
 export GOPROXY=https://goproxy.cn
 export GO111MODULE=on
-#后端编译
-go build -o FoodBackend
 ```
 
+## 依赖包说明
 
-## 软链到$GOPATH/src
+>本开源程序使用go MOD管理依赖包，方便易用，脱离$GOPATH噩梦。
+
+### 软链到$GOPATH/src（不建议）
 
 如果想把这个项目放到`GOPATH`下面，不使用go mod模式的话，只需要把这个项目移到`GOPATH`环境变量包含的任意一个目录下面的src目录里，就可以启用`GOPATH`模式了。
 
@@ -36,14 +37,6 @@ go build -o FoodBackend
 cd FoodBackend
 ln -s $(PWD) ~/go/src/
 ```
-
-## 数据移值
-
-```bash
-# 执行 sql 语句
-mysql> source ./scripts/init.sql;
-```
-
 
 ## 运行方式
 
@@ -59,9 +52,33 @@ mysql> source ./scripts/init.sql;
 
 `realize start`
 
+
+```
+cd FoodBackend
+go run main.go 
+```
+
+## 使用Docker运行
+
+准备了docker-compose和Dockerfile（方便自动化构建），容器外部访问端口为`8881`。
+
+```
+cd FoodBackend
+docker-compose up -d
+curl localhost:8881/api/books/
+```
+
+
+## 数据移值
+
+```bash
+# 执行 sql 语句
+mysql> source ./scripts/init.sql;
+```
+
 ## 访问
 
-`http://localhost:8080/api/`
+`http://localhost:8080/api/books/`
 
 
 # 演示 Demo
