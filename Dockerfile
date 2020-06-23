@@ -2,6 +2,7 @@ FROM golang:1.13.5-alpine3.10 AS builder
 
 WORKDIR /build
 RUN adduser -u 10001 -D app-runner
+#RUN export DOCKER_HOST_IP=$(route -n | awk '/UG[ \t]/{print $2}')
 
 ENV GOPROXY https://goproxy.cn
 COPY go.mod .

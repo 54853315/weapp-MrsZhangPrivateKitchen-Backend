@@ -9,6 +9,8 @@ services:
       - "8881:8080"
     networks:
       - food-union
-networks:
+networks:       # 桥接模式
   food-union:
     driver: bridge
+
+#network_mode: "host"	#宿主模式
