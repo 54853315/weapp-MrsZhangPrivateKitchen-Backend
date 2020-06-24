@@ -63,6 +63,7 @@ func (self *BookController) List(c *gin.Context) {
 		resp(c, map[string]interface{}{
 			"result": books,
 			"total":  total,
+			"skip":   listDto.Skip,
 		})
 	}
 }
