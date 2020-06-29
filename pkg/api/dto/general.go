@@ -7,11 +7,11 @@ import (
 
 // GeneralListDto - General list request params
 type GeneralListDto struct {
-	GeneralAuthDto
-	Skip  int    `form:"skip,default=0" json:"skip"`
-	Limit int    `form:"limit,default=20" json:"limit" binding:"max=10000"`
-	Order string `form:"order" json:"order"`
-	Q     string `form:"q" json:"q"`
+	CreateUserId int
+	Skip         int    `form:"skip,default=0" json:"skip"`
+	Limit        int    `form:"limit,default=20" json:"limit" binding:"max=10000"`
+	Order        string `form:"order" json:"order"`
+	Q            string `form:"q" json:"q"`
 }
 
 //type GeneralTreeDto struct {
@@ -19,8 +19,7 @@ type GeneralListDto struct {
 //}
 
 type GeneralAuthDto struct {
-	CreateUserId int
-	//Token string `form:"token" binding:"required"`
+	CreateUserId int `binding:"required,gte=1"`
 }
 
 type GeneralDelDto struct {
@@ -28,9 +27,9 @@ type GeneralDelDto struct {
 	Id int `uri:"id" json:"id" binding:"required"`
 }
 type GeneralGetDto struct {
-	GeneralAuthDto
-	Id     int    `uri:"id" json:"id" binding:"required"`
-	Status string `uri:"status" form:"status" json:"status" `
+	CreateUserId int
+	Id           int    `uri:"id" json:"id" binding:"required"`
+	Status       string `uri:"status" form:"status" json:"status" `
 }
 
 // TransformSearch - transform search query

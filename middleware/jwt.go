@@ -18,18 +18,22 @@ func JWT() gin.HandlerFunc {
 		var data interface{}
 		code = e.SUCCESS
 		token := util.GetToken(c)
-		util.Log.Debug("token", token)
 		if token == "" {
 			code = e.UNAUTHORIZED
 		} else {
 			claims, err := util.ParseToken(token)
-			util.Log.Debug("err", err)
 			if err != nil {
 				code = e.ERROR_AUTH_CHECK_TOKEN_FAIL
 			} else if time.Now().Unix() > claims.ExpiresAt {
 				code = e.ERROR_AUTH_CHECK_TOKEN_TIMEOUT
 			}
 		}
+
+		UserId = models.GetUserIdByToken(token)
+		if UserId == 0 {
+			code = e.ERROR_AUTH_CHECK_TOKEN_FAIL
+		}
+
 		if code != e.SUCCESS {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code": code,
@@ -41,7 +45,6 @@ func JWT() gin.HandlerFunc {
 		}
 
 		AuthToken = token
-		UserId = models.GetUserIdByToken(token)
 		c.Next()
 	}
 }

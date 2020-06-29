@@ -6,7 +6,6 @@ import (
 
 type UploadDto struct {
 	GeneralAuthDto
-	File         *multipart.FileHeader `form:"file,default=0" binding:"required"`
-	CreateUserId int
-	Url          string
+	File *multipart.FileHeader `form:"file,default=0" binding:"required"`
+	Url  string
 }

@@ -212,7 +212,7 @@ func (self BookController) Upload(c *gin.Context) {
 		savePath := getUploadPath() + pathName
 
 		if err := os.MkdirAll(savePath, os.ModePerm); err != nil {
-			util.Log.Error(err)
+			util.Log.Error(" Make dir fail . ", err)
 		}
 		savePath += "/" + FileName
 
