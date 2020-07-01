@@ -71,6 +71,8 @@ curl localhost:8881/api/books/
 
 ## 数据移值
 
+>建议使用Mysql5.7+
+
 ```bash
 # 执行 sql 语句
 mysql> source ./scripts/init.sql;
@@ -83,7 +85,7 @@ mysql> source ./scripts/init.sql;
 
 # 演示 Demo
 
-（暂未完成开发...)
+由于个人无法发布具有社交含义的小程序，在我完成了这套小程序后翻车了QAQ。所以没有演示demo……
 
 ## 贡献代码
 
